@@ -30,6 +30,7 @@ brain Brain;
 inertial BrainInertial = inertial();
 motor MotorLeft = motor(PORT11, false);
 motor MotorRight = motor(PORT8, true);
+motor MotorIntake = motor(PORT10, false);
 
 // generating and setting random seed
 void initializeRandomSeed(){
@@ -112,6 +113,7 @@ void vexcodeInit() {
 
 // Include the IQ Library
 #include "iq_cpp.h"
+#include "movement.h"
 
 // Allows for easier use of the VEX Library
 using namespace vex;
@@ -121,117 +123,219 @@ float trackingCenter();
 void locationUpdate();
 void driveArc(float radius, float angle, float speed);
 void driveStraight(float distance, float speed);
+float pLeft(float distanceRemaining, float maxSpeed, float initialRotation);
+float pRight(float distanceRemaining, float maxSpeed, float initialRotation);
+float pRightRotate(float angleRemaining, float maxSpeed);
+float pLeftRotate(float angleRemaining, float maxSpeed);
 float location[2] = {0,0}; // x,y
 
 int main() {
   // Initializing Robot Configuration. DO NOT REMOVE!
   vexcodeInit();
   // Begin project code
-  configureAllSensors();
-  wait(1000,msec);
+  Robot cardin(MotorLeft, MotorRight, Brain, BrainInertial);
+  MotorIntake.spin(reverse, 100, percent);
+  // cardin.startLocationThread();
 
-  thread locationThread = thread(locationUpdate);
 
-  //drive in a circle with radius 30 cm, 360 degrees at speed 30%
-  driveArc(30,-90,20);
-  wait(1000,msec);
+  // configureAllSensors();
+  // wait(1000,msec);
 
-  printf("Final Location: X: %d cm, Y: %d cm\n", (int)location[0], (int)location[1]);
+  // thread locationThread = thread(locationUpdate);
 
-}
+  // //drive in a circle with radius 30 cm, 360 degrees at speed 30%
+  // MotorLeft.setStopping(coast);
+  // MotorRight.setStopping(coast);
+  // driveStraight(50, 50);
 
-void configureAllSensors(){
-  BrainInertial.calibrate();
-  wait(2,seconds);
-  BrainInertial.setHeading(0,degrees);
-  BrainInertial.setRotation(0,degrees);
-  MotorLeft.setPosition(0,turns);
-  MotorRight.setPosition(0,turns);
-  Brain.Screen.clearScreen();
-  Brain.Screen.setFont(mono15);
+  // driveArc(20, 90, 50);
 
-}
+  // driveStraight(50, 50);
 
-float trackingCenter()
-{
-  float leftDistance = MotorLeft.position(turns);
-  float rightDistance = MotorRight.position(turns);
-  float centerPosition = (leftDistance + rightDistance) / 2.0;
-  return centerPosition;
-}
+  // driveArc(20, 90, 50);
 
-void locationUpdate()
-{
-  const float wheelCircumference = 20.0; // cm
-  float waitTime = 10; //ms
-  float lastLeft = MotorLeft.position(turns);
-  float lastRight = MotorRight.position(turns);
-  // float lastHeading = BrainInertial.heading(degrees);
-  float lastCenter = (lastLeft + lastRight) / 2.0;
+  // driveStraight(50, 50);
+
+  // driveArc(20, 90, 50);
+
+  // driveStraight(50, 50);
   
-  wait(waitTime, msec); // Initial wait before starting updates
-  while(true)
-  {
-    float currentLeft = MotorLeft.position(turns);
-    float currentRight = MotorRight.position(turns);
-    float currentHeading = BrainInertial.heading(degrees);
-    float currentCenter = (currentLeft + currentRight) / 2.0;
-    float deltaCenter = (currentCenter - lastCenter) * wheelCircumference;
+  // driveArc(20, 90, 50);
 
-    // Update last values for next iteration
-    lastLeft = currentLeft;
-    lastRight = currentRight;
-    lastCenter = currentCenter;
+  // MotorLeft.setStopping(hold);
+  // MotorRight.setStopping(hold);
 
-    //tests and flags
-    if(deltaCenter > 100 || deltaCenter < -100)
-    {
-      printf("Warning: Large deltaCenter detected");
-    }
+  // // wait(1000,msec);
 
-    location[0] += deltaCenter * cos(currentHeading * (M_PI / 180.0)); // x
-    location[1] += deltaCenter * sin(currentHeading * (M_PI / 180.0)); // y
-
-    wait(waitTime, msec); // Adjust the update rate as needed
-  }
+  // printf("Final Location: X: %d cm, Y: %d cm\n", (int)location[0], (int)location[1]);
+  // Brain.Screen.print("X: %.2f cm, Y: %.2f cm\n", location[0], location[1]);
 }
 
-void driveArc(float radius, float angle, float speed)
-{
-  float wheelBase = 15.8; // cm, distance between left and right wheels
-  float initialRotation = BrainInertial.rotation(degrees);
-  float diffSpeeds = (radius - (wheelBase / 2.0))/(radius + (wheelBase / 2.0));
-  float inSpeed = speed * diffSpeeds;
-  float outSpeed = speed;
+// void configureAllSensors(){
+//   BrainInertial.calibrate();
+//   wait(2,seconds);
+//   BrainInertial.setHeading(0,degrees);
+//   BrainInertial.setRotation(0,degrees);
+//   MotorLeft.setPosition(0,turns);
+//   MotorRight.setPosition(0,turns);
+//   Brain.Screen.clearScreen();
+//   Brain.Screen.setFont(mono15);
 
-  if(angle == 0)
-  {
-    return;
-  }
-  else if(angle < 0)
-  {
-    //turn left
-    MotorLeft.setVelocity(inSpeed, percent);
-    MotorRight.setVelocity(outSpeed, percent);
-    MotorLeft.spin(forward);
-    MotorRight.spin(forward);
-    while(BrainInertial.rotation(degrees) > initialRotation + angle)
-    {
-      wait(10,msec);
-    }
-  }
-  else
-  {
-    //turn right
-    MotorLeft.setVelocity(outSpeed, percent);
-    MotorRight.setVelocity(inSpeed, percent);
-    MotorLeft.spin(forward);
-    MotorRight.spin(forward);
-    while(BrainInertial.rotation(degrees) < initialRotation + angle)
-    {
-      wait(10,msec);
-    }
-  }
-  MotorLeft.stop();
-  MotorRight.stop();
-}
+// }
+
+// float trackingCenter()
+// {
+//   float leftDistance = MotorLeft.position(turns);
+//   float rightDistance = MotorRight.position(turns);
+//   float centerPosition = (leftDistance + rightDistance) / 2.0;
+//   return centerPosition;
+// }
+
+// void locationUpdate()
+// {
+//   const float wheelCircumference = 20.0; // cm
+//   float waitTime = 10; //ms
+//   float lastLeft = MotorLeft.position(turns);
+//   float lastRight = MotorRight.position(turns);
+//   // float lastHeading = BrainInertial.heading(degrees);
+//   float lastCenter = (lastLeft + lastRight) / 2.0;
+  
+//   wait(waitTime, msec); // Initial wait before starting updates
+//   while(true)
+//   {
+//     float currentLeft = MotorLeft.position(turns);
+//     float currentRight = MotorRight.position(turns);
+//     float currentHeading = BrainInertial.heading(degrees);
+//     float currentCenter = (currentLeft + currentRight) / 2.0;
+//     float deltaCenter = (currentCenter - lastCenter) * wheelCircumference;
+
+//     // Update last values for next iteration
+//     lastLeft = currentLeft;
+//     lastRight = currentRight;
+//     lastCenter = currentCenter;
+
+//     //tests and flags
+//     if(deltaCenter > 100 || deltaCenter < -100)
+//     {
+//       printf("Warning: Large deltaCenter detected");
+//     }
+
+//     location[0] += deltaCenter * cos(currentHeading * (M_PI / 180.0)); // x
+//     location[1] += deltaCenter * sin(currentHeading * (M_PI / 180.0)); // y
+
+//     wait(waitTime, msec); // Adjust the update rate as needed
+//   }
+// }
+
+// float pLeft(float distanceRemaining, float maxSpeed = 100, float initialRotation = NULL)
+// {
+//   // Simple proportional controller
+//   float a = 10.0;
+//   float b = 5.0;
+//   float percentReturn = 100;
+//   percentReturn = ( (distanceRemaining)/(distanceRemaining + a) ) * (maxSpeed - b) + b;
+//   //equation
+//   float headingError = BrainInertial.rotation(degrees) - initialRotation;
+//   if (headingError > 0 || initialRotation!=NULL)
+//   {
+//     percentReturn -= headingError; // Adjust the factor as needed
+//   }
+//   return percentReturn;
+// }
+
+// float pRight(float distanceRemaining, float maxSpeed = 100, float initialRotation = NULL)
+// {
+//   // Simple proportional controller
+//   float a = 10.0;
+//   float b = 5.0;
+//   float percentReturn = 100;
+//   percentReturn = ( (distanceRemaining)/(distanceRemaining + a) ) * (maxSpeed - b) + b;
+//   //equation
+//   float headingError = BrainInertial.rotation(degrees) - initialRotation;
+//   if (headingError < 0 || initialRotation!=NULL)
+//   {
+//     percentReturn -= -headingError; // Adjust the factor as needed
+//   }
+//   return percentReturn;
+// }
+// void driveStraight(float dist, float maxSpeed)
+// {
+//   float wheelCircumference = 20.0; // cm
+//   float initialPosition = trackingCenter() * wheelCircumference;
+//   float targetPosition = initialPosition + dist;
+//   float distanceRemaining = dist;
+
+//   float initialRotation = BrainInertial.rotation(degrees);
+//   MotorLeft.spin(forward);
+//   MotorRight.spin(forward);
+//   while((trackingCenter() * wheelCircumference) - initialPosition < dist)
+//   {
+//     distanceRemaining = targetPosition - (trackingCenter() * wheelCircumference);
+//     MotorRight.setVelocity(pRight(distanceRemaining, maxSpeed, initialRotation), percent);
+//     MotorLeft.setVelocity(pLeft(distanceRemaining, maxSpeed, initialRotation), percent);
+
+//     wait(10,msec);
+//   }
+//   MotorLeft.stop();
+//   MotorRight.stop();
+// }
+
+// void driveArc(float radius, float angle, float speed)
+// {
+//   float wheelBase = 15.8; // cm, distance between left and right wheels
+//   float initialRotation = BrainInertial.rotation(degrees);
+//   float diffSpeeds = (radius - (wheelBase / 2.0))/(radius + (wheelBase / 2.0));
+//   float inSpeed = speed * diffSpeeds;
+//   float outSpeed = speed;
+
+//   if(angle == 0)
+//   {
+//     return;
+//   }
+//   else if(angle < 0)
+//   {
+//     //turn left
+//     MotorLeft.spin(forward);
+//     MotorRight.spin(forward);
+//     while(BrainInertial.rotation(degrees) > initialRotation + angle)
+//     {
+//       MotorLeft.setVelocity(pRightRotate(BrainInertial.rotation(degrees) - (initialRotation + angle), inSpeed), percent);
+//       MotorRight.setVelocity(pRightRotate(BrainInertial.rotation(degrees) - (initialRotation + angle), outSpeed), percent);
+//       wait(10,msec);
+//     }
+//   }
+//   else
+//   {
+//     //turn right
+//     MotorLeft.spin(forward);
+//     MotorRight.spin(forward);
+//     while(BrainInertial.rotation(degrees) < initialRotation + angle)
+//     {
+//       MotorLeft.setVelocity(pLeftRotate(BrainInertial.rotation(degrees) - (initialRotation + angle), outSpeed), percent);
+//       MotorRight.setVelocity(pLeftRotate(BrainInertial.rotation(degrees) - (initialRotation + angle), inSpeed), percent);
+//       wait(10,msec);
+//     }
+//   }
+//   MotorLeft.stop();
+//   MotorRight.stop();
+// }
+
+// float pRightRotate(float angleRemaining, float maxSpeed)
+// {
+//   // Simple proportional controller
+//   float a = 7.0;
+//   float b = 5.0;
+//   float percentReturn = 100;
+//   percentReturn = ( (angleRemaining)/(angleRemaining + a) ) * (maxSpeed - b) + b;
+//   return percentReturn;
+// }
+
+// float pLeftRotate(float angleRemaining, float maxSpeed)
+// {
+//   // Simple proportional controller
+//   float a = 7.0;
+//   float b = 5.0;
+//   float percentReturn = 100;
+//   percentReturn = ( (angleRemaining)/(angleRemaining + a) ) * (maxSpeed - b) + b;
+//   return percentReturn;
+// }
