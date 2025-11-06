@@ -25,6 +25,9 @@ public:
     {
         configureAllSensors();
         printf("Robot initialized.\n");
+
+        printf("I HATE VEX\n");
+        wait(1000, msec);
         // create location pointer
         //  void *locationptr = &locationUpdate();
         //  startLocationThread();
@@ -48,6 +51,21 @@ public:
     float getRotation()
     {
         return BrainInertial.rotation(degrees);
+    }
+
+    void driveTest()
+    {
+        // driveStraight(100, 50);
+        // driveArc(50, 90, 30);
+        // driveStraight(100, 50);
+        // driveArc(50, 90, 30);
+        // driveStraight(100, 50);
+        // driveArc(50, 90, 30);
+        // driveStraight(100, 50);
+        // driveArc(50, 90, 30);
+        driveStraight(100, 100);
+
+        // Print final location on brain screen
     }
 
     // void startLocationThread()
@@ -101,15 +119,14 @@ private:
         double currentHeading = BrainInertial.heading(degrees) * (M_PI / 180.0);
         double deltaCenter = (currentCenter - lastCenter) * wheelCircumference;
 
-        if (deltaCenter > 1 || deltaCenter < -1)
-        {
-            printf("Warning: Large deltaCenter detected");
-        }
+        // if (deltaCenter > 1 || deltaCenter < -1)
+        // {
+        //     printf("Warning: Large deltaCenter detected");
+        // }
+        // printf("PIZAA: %.2f cm\n", deltaCenter);
 
         location[0] += deltaCenter * cos(currentHeading); // x
-        location[1] += deltaCenter * sin(currentHeading); // y
-
-        wait(waitTime, msec); // Adjust the update rate as needed
+        location[1] += deltaCenter * sin(currentHeading); // y // Adjust the update rate as needed
     }
 
     // void locationUpdate()
@@ -150,6 +167,7 @@ private:
     //     }
     // }
 
+
     void moveTo(float x, float y, float speed)
     {
         // Implement path planning and movement to (x, y)
@@ -164,18 +182,35 @@ private:
         printf("Driving arc with radius %.2f, angle %.2f at speed %.2f\n", radius, angle, speed);
     }
 
+    float trackingCenter()
+    {
+        float leftDistance = LeftMotor.position(turns);
+        float rightDistance = RightMotor.position(turns);
+        float centerPosition = (leftDistance + rightDistance) / 2.0;
+        return centerPosition;
+    }
+
     void driveStraight(float distance, float maxSpeed)
     {
         // Implement driving straight for a certain distance
         // This is a placeholder for actual straight driving logic
+        //   float wheelCircumference = 20.0; // cm
+        float initialPosition = LeftMotor.position(turns) * wheelCircumference;
 
-        while (true) // while loop for movement
+        float initialRotation = BrainInertial.rotation(degrees);
+        float distanceRemaining = distance;
+        float targetPosition = initialPosition + distance;
+        LeftMotor.spin(forward);
+        RightMotor.spin(forward);
+        while ((trackingCenter() - initialPosition) * wheelCircumference < distance)
         {
-            MotorLeft.setVelocity(pLeft(distance, maxSpeed, BrainInertial.rotation(degrees)), percent);
-            MotorRight.setVelocity(pRight(distance, maxSpeed, BrainInertial.rotation(degrees)), percent);
+            distanceRemaining = targetPosition - (trackingCenter() * wheelCircumference);
+            LeftMotor.setVelocity(pLeft(distanceRemaining, maxSpeed, initialRotation), percent);
+            RightMotor.setVelocity(pRight(distanceRemaining, maxSpeed, initialRotation), percent);
             locationUpdate();
         }
-
+        LeftMotor.stop();
+        RightMotor.stop();
         printf("Driving straight for distance %.2f at max speed %.2f\n", distance, maxSpeed);
     }
 

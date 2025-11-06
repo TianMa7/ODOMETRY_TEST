@@ -134,10 +134,11 @@ int main() {
   vexcodeInit();
   // Begin project code
   Robot cardin(MotorLeft, MotorRight, Brain, BrainInertial);
-  MotorIntake.spin(reverse, 100, percent);
+
+  cardin.driveTest();
   // cardin.startLocationThread();
 
-
+  Brain.Screen.print("X:%.2f, Y: %.2f\n", cardin.getLocationX(), cardin.getLocationY());
   // configureAllSensors();
   // wait(1000,msec);
 
