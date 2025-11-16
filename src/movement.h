@@ -6,17 +6,15 @@ using namespace vex;
 
 class Robot
 {
-    // Movement class implementation details
-    // Outside should be able to access:
-    // getLocation(), moveTo(x, y), driveArc(radius, angle, speed)
+
 public:
     Robot(
         motor &Left,
         motor &Right,
         brain &Brain,
         inertial &IMU)
-        : LeftMotor(Left),
-          RightMotor(Right),
+        : MotorLeft(Left),
+          MotorRight(Right),
           Brain(Brain),
           BrainInertial(IMU)
     {
@@ -34,41 +32,44 @@ public:
         return location[1];
     }
 
-    float getHeading() const
-    {
-        return BrainInertial.heading(degrees);
-    }
+    void moveTo(float x, float y, float finalAngle, float speed);
 
-    float getRotation() const
-    {
-        return BrainInertial.rotation(degrees);
-    }
-
-    void moveTo(float x, float y, float speed);
-
-    void driveTest();
+    void locationUpdate();
 
 private:
-    motor &LeftMotor;
-    motor &RightMotor;
+    motor &MotorLeft;
+    motor &MotorRight;
     brain &Brain;
     inertial &BrainInertial;
 
     float location[2] = {0, 0};             // x, y
     const double wheelCircumference = 20.0; // cm
-    const double wheelBase = 0; //cm
+    const double wheelBase = 14.5;             // cm
 
     void configureAllSensors();
-    void locationUpdate();
-    void driveArc(float radius, float angle, float speed);
-    void driveStraight(float distance, float speed);
-    float pLeft(float distanceRemaining, float maxSpeed, float initialRotation);
-    float pRight(float distanceRemaining, float maxSpeed, float initialRotation);
-    // UNSURE IF NEEDED
-    float trackingCenter();
 
     float arcRatio(int radius)
     {
-        return (1 - (wheelBase/ (2 * radius))) / (1 + (wheelBase/ (2 * radius)));
+        return (1 - (wheelBase / (2 * radius))) / (1 + (wheelBase / (2 * radius)));
+    }
+
+    float findTangent(float centerX, float centerY, float radius)
+    {
+        return (tan((centerX - location[0]) / (centerY - location[1])) - tan((radius) / (hypot(centerY - location[1], centerX - location[0])))) * 180 / M_PI;
+    }
+
+    // MATH EXPLAINED BY CHATGPT I COULDNT THINK CLEAR ENOUGH
+    float normalizeAngle(float robotAngle, float targetAngle)
+    {
+        float angle = targetAngle - robotAngle;
+        if (angle >= 180)
+        {
+            angle -= 360;
+        }
+        if (angle < -180)
+        {
+            angle += 360;
+        }
+        return angle;
     }
 };
